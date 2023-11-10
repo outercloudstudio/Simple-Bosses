@@ -1,4 +1,4 @@
-package com.example.mixin;
+package outercloud.simple_bosses.mixin;
 
 import net.minecraft.server.MinecraftServer;
 import org.spongepowered.asm.mixin.Mixin;

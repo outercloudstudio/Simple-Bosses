@@ -1,31 +1,31 @@
 {
 	"schemaVersion": 1,
-	"id": "modid",
+	"id": "simple_bosses",
 	"version": "${version}",
-	"name": "Example mod",
+	"name": "Simple Bosses",
 	"description": "This is an example description! Tell everyone what your mod is about!",
 	"authors": [
-		"Me!"
+		"Outer Cloud"
 	],
 	"contact": {
 		"homepage": "https://fabricmc.net/",
 		"sources": "https://github.com/FabricMC/fabric-example-mod"
 	},
 	"license": "CC0-1.0",
-	"icon": "assets/modid/icon.png",
+	"icon": "assets/simple_bosses/icon.png",
 	"environment": "*",
 	"entrypoints": {
 		"main": [
-			"com.example.ExampleMod"
+			"outercloud.simple_bosses.SimpleBosses"
 		],
 		"client": [
-			"com.example.ExampleModClient"
+			"outercloud.simple_bosses.SimpleBossesClient"
 		]
 	},
 	"mixins": [
-		"modid.mixins.json",
+      "simple_bosses.mixins.json",
 		{
-			"config": "modid.client.mixins.json",
+			"config": "simple_bosses.client.mixins.json",
 			"environment": "client"
 		}
 	],

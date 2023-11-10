@@ -1,9 +1,9 @@
 {
 	"required": true,
-	"package": "com.example.mixin.client",
+	"package": "outercloud.simple_bosses.mixin.client",
 	"compatibilityLevel": "JAVA_17",
 	"client": [
-		"ExampleClientMixin"
+		"outercloud.simple_bosses.mixin.client.ExampleClientMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1
