@@ -66,7 +66,7 @@ public class SimpleBosses implements ModInitializer {
 																					int duration = IntegerArgumentType.getInteger(context, "duration");
 																					int recover = IntegerArgumentType.getInteger(context, "recover");
 
-																					if(PersistentState.bossExists(boss, context.getSource().getServer())) {
+																					if(!PersistentState.bossExists(boss, context.getSource().getServer())) {
 																						context.getSource().sendError(Text.of("No boss with that name exists!"));
 
 																						return -1;
@@ -94,7 +94,7 @@ public class SimpleBosses implements ModInitializer {
 													String boss = StringArgumentType.getString(context, "boss_name");
 													String move = StringArgumentType.getString(context, "move_name");
 
-													if(PersistentState.bossExists(boss, context.getSource().getServer())) {
+													if(!PersistentState.bossExists(boss, context.getSource().getServer())) {
 														context.getSource().sendError(Text.of("No boss with that name exists!"));
 
 														return -1;
@@ -126,7 +126,7 @@ public class SimpleBosses implements ModInitializer {
 																					int duration = IntegerArgumentType.getInteger(context, "duration");
 																					int recover = IntegerArgumentType.getInteger(context, "recover");
 
-																					if(PersistentState.bossExists(boss, context.getSource().getServer())) {
+																					if(!PersistentState.bossExists(boss, context.getSource().getServer())) {
 																						context.getSource().sendError(Text.of("No boss with that name exists!"));
 
 																						return -1;
@@ -153,7 +153,7 @@ public class SimpleBosses implements ModInitializer {
 										.executes(context -> {
 											String name = StringArgumentType.getString(context, "boss_name");
 
-											if(PersistentState.bossExists(name, context.getSource().getServer())) {
+											if(!PersistentState.bossExists(name, context.getSource().getServer())) {
 												context.getSource().sendError(Text.of("No boss with that name exists!"));
 
 												return -1;
@@ -209,10 +209,25 @@ public class SimpleBosses implements ModInitializer {
 								.executes(context -> {
 									String name = StringArgumentType.getString(context, "name");
 
-									if(PersistentState.bossExists(name, context.getSource().getServer())) {
+									if(!PersistentState.bossExists(name, context.getSource().getServer())) {
 										context.getSource().sendError(Text.of("No boss with that name exists!"));
 
 										return -1;
+									}
+
+									Entity entity = PersistentState.getBoss(name, context.getSource().getServer());
+
+									if(entity != null) {
+										String state = PersistentState.getState(name, context.getSource().getServer());
+										String move = PersistentState.getMove(name, context.getSource().getServer());
+
+										if(entity.getCommandTags().contains("boss_once_" + state.toLowerCase() + "_" + move)) {
+											entity.removeScoreboardTag("boss_once_" + state.toLowerCase() + "_" + move);
+										}
+
+										if(entity.getCommandTags().contains("boss_" + state.toLowerCase() + "_" + move)) {
+											entity.removeScoreboardTag("boss_" + state.toLowerCase() + "_" + move);
+										}
 									}
 
 									PersistentState.removeBoss(name, context.getSource().getServer());
@@ -228,7 +243,7 @@ public class SimpleBosses implements ModInitializer {
 											String boss = StringArgumentType.getString(context, "boss_name");
 											String move = StringArgumentType.getString(context, "move_name");
 
-											if(PersistentState.bossExists(boss, context.getSource().getServer())) {
+											if(!PersistentState.bossExists(boss, context.getSource().getServer())) {
 												context.getSource().sendError(Text.of("No boss with that name exists!"));
 
 												return -1;
@@ -259,11 +274,7 @@ public class SimpleBosses implements ModInitializer {
 			String move = PersistentState.getMove(name, server);
 
 			if(tags.contains("boss_once_windup_" + move)) boss.removeScoreboardTag("boss_once_windup_" + move);
-			if(tags.contains("boss_once_move_" + move)) {
-				boss.removeScoreboardTag("boss_once_move_" + move);
-
-				LOGGER.info("remove boss_once_move_" + move);
-			}
+			if(tags.contains("boss_once_move_" + move)) boss.removeScoreboardTag("boss_once_move_" + move);
 			if(tags.contains("boss_once_recover_" + move)) boss.removeScoreboardTag("boss_once_recover_" + move);
 
 			int progress = PersistentState.getProgress(name, server);
