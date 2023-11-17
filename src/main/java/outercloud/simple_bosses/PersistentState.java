@@ -1,15 +1,15 @@
 package outercloud.simple_bosses;
 
 import net.minecraft.entity.Entity;
-import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.*;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.world.PersistentStateManager;
 import net.minecraft.world.World;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.UUID;
 
 public class PersistentState extends net.minecraft.world.PersistentState {
@@ -25,11 +25,62 @@ public class PersistentState extends net.minecraft.world.PersistentState {
 
     @Override
     public NbtCompound writeNbt(NbtCompound nbt) {
+        NbtCompound bossesData = new NbtCompound();
+        NbtCompound bossStatesData = new NbtCompound();
+        NbtCompound bossCurrentMovesData = new NbtCompound();
+        NbtCompound bossStateProgressesData = new NbtCompound();
+        NbtCompound movesData = new NbtCompound();
+        NbtCompound movesCooldownsData = new NbtCompound();
+        NbtCompound movesDurationsData = new NbtCompound();
+        NbtCompound movesWindupsData = new NbtCompound();
+        NbtCompound movesRecoversData = new NbtCompound();
+
+        for(String boss : bosses.keySet()) {
+            bossesData.putString(boss, bosses.get(boss).toString());
+            bossStatesData.putString(boss, bossStates.get(boss));
+            bossCurrentMovesData.putString(boss, bossCurrentMoves.get(boss));
+            bossStateProgressesData.putInt(boss, bossStateProgresses.get(boss));
+
+            NbtList moveData = new NbtList();
+
+            for(String move: moves.get(boss)) {
+                moveData.add(NbtString.of(move));
+            }
+
+            movesData.put(boss, moveData);
+            movesCooldownsData.putIntArray(boss, moveCooldowns.get(boss));
+            movesDurationsData.putIntArray(boss, moveDurations.get(boss));
+            movesWindupsData.putIntArray(boss, moveWindups.get(boss));
+            movesRecoversData.putIntArray(boss, moveRecovers.get(boss));
+        }
+
+        nbt.put("bosses", bossesData);
+        nbt.put("bossesStates", bossesData);
+        nbt.put("bossesCurrentMoves", bossesData);
+        nbt.put("bossesStateProgresses", bossesData);
+        nbt.put("moves", bossesData);
+        nbt.put("moveCooldowns", bossesData);
+        nbt.put("moveDurations", bossesData);
+        nbt.put("moveWindups", bossesData);
+        nbt.put("moveRecovers", bossesData);
+
         return nbt;
     }
 
     public static PersistentState createFromNbt(NbtCompound nbt) {
         PersistentState state = new PersistentState();
+
+        for(String boss: nbt.getCompound("bosses").getKeys()) {
+            state.bosses.put(boss, UUID.fromString(nbt.getCompound("bosses").getString(boss)));
+            state.bossStates.put(boss, nbt.getCompound("bossStates").getString(boss));
+            state.bossCurrentMoves.put(boss, nbt.getCompound("bossCurrentMoves").getString(boss));
+            state.bossStateProgresses.put(boss, nbt.getCompound("bossStateProgresses").getInt(boss));
+            state.moves.put(boss, new ArrayList<>(Arrays.asList((String[])nbt.getCompound("moves").getList("boss", NbtElement.STRING_TYPE).toArray())));
+            state.moveCooldowns.put(boss, new ArrayList<>(Arrays.asList((Integer[])nbt.getCompound("moveCooldowns").getList("boss", NbtElement.INT_TYPE).toArray())));
+            state.moveDurations.put(boss, new ArrayList<>(Arrays.asList((Integer[])nbt.getCompound("moveDurations").getList("boss", NbtElement.INT_TYPE).toArray())));
+            state.moveWindups.put(boss, new ArrayList<>(Arrays.asList((Integer[])nbt.getCompound("moveWindups").getList("boss", NbtElement.INT_TYPE).toArray())));
+            state.moveRecovers.put(boss, new ArrayList<>(Arrays.asList((Integer[])nbt.getCompound("moveRecovers").getList("boss", NbtElement.INT_TYPE).toArray())));
+        }
 
         return state;
     }
@@ -55,6 +106,12 @@ public class PersistentState extends net.minecraft.world.PersistentState {
         instance.bossStates.put(name, "Cooldown");
         instance.bossStateProgresses.put(name, 0);
         instance.bossCurrentMoves.put(name, "None");
+    }
+
+    public static boolean bossExists(String name, MinecraftServer server) {
+        PersistentState instance = get(server);
+
+        return instance.bosses.keySet().contains(name);
     }
 
     public static void removeBoss(String name, MinecraftServer server) {
@@ -114,6 +171,12 @@ public class PersistentState extends net.minecraft.world.PersistentState {
         instance.moveDurations.get(boss).add(duration);
         instance.moveWindups.get(boss).add(windup);
         instance.moveRecovers.get(boss).add(recover);
+    }
+
+    public static boolean moveExists(String boss, String name, MinecraftServer server) {
+        PersistentState instance = get(server);
+
+        return  instance.moves.get(boss).contains(name);
     }
 
     public static void removeMove(String boss, String name, MinecraftServer server) {

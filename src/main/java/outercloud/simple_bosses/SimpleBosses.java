@@ -1,5 +1,6 @@
 package outercloud.simple_bosses;
 
+import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import net.fabricmc.api.ModInitializer;
 
@@ -16,6 +17,7 @@ import outercloud.simple_bosses.lib.Commands;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
 
 public class SimpleBosses implements ModInitializer {
     public static final Logger LOGGER = LoggerFactory.getLogger("simple_bosses");
@@ -35,6 +37,12 @@ public class SimpleBosses implements ModInitializer {
 											String name = StringArgumentType.getString(context, "name");
 											Entity entity = EntityArgumentType.getEntity(context, "target");
 
+											if(PersistentState.bossExists(name, context.getSource().getServer())) {
+												context.getSource().sendError(Text.of("A boss with that name already exists!"));
+
+												return -1;
+											}
+
 											PersistentState.setBoss(name, entity, context.getSource().getServer());
 
 											return 1;
@@ -46,14 +54,38 @@ public class SimpleBosses implements ModInitializer {
 						.then(CommandManager.argument("boss_name", StringArgumentType.word())
 								.then(CommandManager.literal("add")
 										.then(CommandManager.argument("move_name", StringArgumentType.word())
-												.executes(context -> {
-													String boss = StringArgumentType.getString(context, "boss_name");
-													String move = StringArgumentType.getString(context, "move_name");
+												.then(CommandManager.argument("cooldown", IntegerArgumentType.integer(0))
+														.then(CommandManager.argument("windup", IntegerArgumentType.integer(0))
+																.then(CommandManager.argument("duration", IntegerArgumentType.integer(0))
+																		.then(CommandManager.argument("recover", IntegerArgumentType.integer(0))
+																				.executes(context -> {
+																					String boss = StringArgumentType.getString(context, "boss_name");
+																					String move = StringArgumentType.getString(context, "move_name");
+																					int cooldown = IntegerArgumentType.getInteger(context, "cooldown");
+																					int windup = IntegerArgumentType.getInteger(context, "windup");
+																					int duration = IntegerArgumentType.getInteger(context, "duration");
+																					int recover = IntegerArgumentType.getInteger(context, "recover");
 
-													PersistentState.addMove(boss, move, 20, 0, 0, 0, context.getSource().getServer());
+																					if(PersistentState.bossExists(boss, context.getSource().getServer())) {
+																						context.getSource().sendError(Text.of("No boss with that name exists!"));
 
-													return 1;
-												})
+																						return -1;
+																					}
+
+																					if(PersistentState.moveExists(boss, move, context.getSource().getServer())) {
+																						context.getSource().sendError(Text.of("A move with that name already exists on that boss!"));
+
+																						return -1;
+																					}
+
+																					PersistentState.addMove(boss, move, cooldown, duration, windup, recover, context.getSource().getServer());
+
+																					return 1;
+																				})
+																		)
+																)
+														)
+												)
 										)
 								)
 								.then(CommandManager.literal("remove")
@@ -62,21 +94,83 @@ public class SimpleBosses implements ModInitializer {
 													String boss = StringArgumentType.getString(context, "boss_name");
 													String move = StringArgumentType.getString(context, "move_name");
 
+													if(PersistentState.bossExists(boss, context.getSource().getServer())) {
+														context.getSource().sendError(Text.of("No boss with that name exists!"));
+
+														return -1;
+													}
+
+													if(!PersistentState.moveExists(boss, move, context.getSource().getServer())) {
+														context.getSource().sendError(Text.of("That boss does not have that move!"));
+
+														return -1;
+													}
+
 													PersistentState.removeMove(boss, move, context.getSource().getServer());
 
 													return 1;
 												})
 										)
 								)
-								.then(CommandManager.literal("edit"))
+								.then(CommandManager.literal("edit")
+										.then(CommandManager.argument("move_name", StringArgumentType.word())
+												.then(CommandManager.argument("cooldown", IntegerArgumentType.integer(0))
+														.then(CommandManager.argument("windup", IntegerArgumentType.integer(0))
+																.then(CommandManager.argument("duration", IntegerArgumentType.integer(0))
+																		.then(CommandManager.argument("recover", IntegerArgumentType.integer(0))
+																				.executes(context -> {
+																					String boss = StringArgumentType.getString(context, "boss_name");
+																					String move = StringArgumentType.getString(context, "move_name");
+																					int cooldown = IntegerArgumentType.getInteger(context, "cooldown");
+																					int windup = IntegerArgumentType.getInteger(context, "windup");
+																					int duration = IntegerArgumentType.getInteger(context, "duration");
+																					int recover = IntegerArgumentType.getInteger(context, "recover");
+
+																					if(PersistentState.bossExists(boss, context.getSource().getServer())) {
+																						context.getSource().sendError(Text.of("No boss with that name exists!"));
+
+																						return -1;
+																					}
+
+																					if(!PersistentState.moveExists(boss, move, context.getSource().getServer())) {
+																						context.getSource().sendError(Text.of("That boss does not have that move!"));
+
+																						return -1;
+																					}
+
+																					PersistentState.removeMove(boss, move, context.getSource().getServer());
+																					PersistentState.addMove(boss, move, cooldown, duration, windup, recover, context.getSource().getServer());
+
+																					return 1;
+																				})
+																		)
+																)
+														)
+												)
+										)
+								)
 								.then(CommandManager.literal("list")
 										.executes(context -> {
 											String name = StringArgumentType.getString(context, "boss_name");
 
+											if(PersistentState.bossExists(name, context.getSource().getServer())) {
+												context.getSource().sendError(Text.of("No boss with that name exists!"));
+
+												return -1;
+											}
+
+											ArrayList<String> moves = PersistentState.getBossMoves(name, context.getSource().getServer());
+
+											if(moves.isEmpty()) {
+												context.getSource().sendMessage(Text.of(name + " has no moves."));
+
+												return 1;
+											}
+
 											context.getSource().sendMessage(Text.of("Moves of " + name + ":"));
 
 											int index = 1;
-											for(String moveName: PersistentState.getBossMoves(name, context.getSource().getServer())) {
+											for(String moveName: moves) {
 												context.getSource().sendMessage(Text.of(index + ". " + moveName));
 
 												index++;
@@ -90,10 +184,18 @@ public class SimpleBosses implements ModInitializer {
 				.then(CommandManager.literal("list")
 						.then(CommandManager.argument("name", StringArgumentType.word()))
 						.executes(context -> {
+							ArrayList<String> bosses = PersistentState.getBossNames(context.getSource().getServer());
+
+							if(bosses.isEmpty()) {
+								context.getSource().sendMessage(Text.of("There are no bosses."));
+
+								return 1;
+							}
+
 							context.getSource().sendMessage(Text.of("Bosses:"));
 
 							int index = 1;
-							for(String name: PersistentState.getBossNames(context.getSource().getServer())) {
+							for(String name: bosses) {
 								context.getSource().sendMessage(Text.of(index + ". " + name));
 
 								index++;
@@ -107,6 +209,12 @@ public class SimpleBosses implements ModInitializer {
 								.executes(context -> {
 									String name = StringArgumentType.getString(context, "name");
 
+									if(PersistentState.bossExists(name, context.getSource().getServer())) {
+										context.getSource().sendError(Text.of("No boss with that name exists!"));
+
+										return -1;
+									}
+
 									PersistentState.removeBoss(name, context.getSource().getServer());
 
 									return 1;
@@ -114,8 +222,31 @@ public class SimpleBosses implements ModInitializer {
 						)
 				)
 				.then(CommandManager.literal("debug")
-						.then(CommandManager.argument("name", StringArgumentType.word())
-								.then(CommandManager.argument("move", StringArgumentType.word()))
+						.then(CommandManager.argument("boss_name", StringArgumentType.word())
+								.then(CommandManager.argument("move_name", StringArgumentType.word())
+										.executes(context -> {
+											String boss = StringArgumentType.getString(context, "boss_name");
+											String move = StringArgumentType.getString(context, "move_name");
+
+											if(PersistentState.bossExists(boss, context.getSource().getServer())) {
+												context.getSource().sendError(Text.of("No boss with that name exists!"));
+
+												return -1;
+											}
+
+											if(!PersistentState.moveExists(boss, move, context.getSource().getServer())) {
+												context.getSource().sendError(Text.of("That boss does not have that move!"));
+
+												return -1;
+											}
+
+											PersistentState.setState(boss, "Windup", context.getSource().getServer());
+											PersistentState.setMove(boss, move, context.getSource().getServer());
+											PersistentState.setProgress(boss, PersistentState.getWindup(boss, move, context.getSource().getServer()), context.getSource().getServer());
+
+											return 1;
+										})
+								)
 						)
 				)
 		);
@@ -124,6 +255,16 @@ public class SimpleBosses implements ModInitializer {
 	private void tick(MinecraftServer server) {
 		for(String name : PersistentState.getBossNames(server)) {
 			Entity boss = PersistentState.getBoss(name, server);
+			Set<String> tags = boss.getCommandTags();
+			String move = PersistentState.getMove(name, server);
+
+			if(tags.contains("boss_once_windup_" + move)) boss.removeScoreboardTag("boss_once_windup_" + move);
+			if(tags.contains("boss_once_move_" + move)) {
+				boss.removeScoreboardTag("boss_once_move_" + move);
+
+				LOGGER.info("remove boss_once_move_" + move);
+			}
+			if(tags.contains("boss_once_recover_" + move)) boss.removeScoreboardTag("boss_once_recover_" + move);
 
 			int progress = PersistentState.getProgress(name, server);
 
@@ -144,32 +285,35 @@ public class SimpleBosses implements ModInitializer {
 				PersistentState.setMove(name, newMove, server);
 				PersistentState.setProgress(name, PersistentState.getWindup(name, newMove, server), server);
 
-				LOGGER.info("Switched from Cooldown to Windup on " + name);
-			} else if(state == "Windup") {
-				String move = PersistentState.getMove(name, server);
+				boss.addCommandTag("boss_windup_" + newMove);
+				boss.addCommandTag("boss_once_windup_" + newMove);
+			}
 
+			if(state == "Windup") {
 				PersistentState.setState(name, "Move", server);
 				PersistentState.setProgress(name, PersistentState.getDuration(name, move, server), server);
 
-				LOGGER.info("Switched from Windup to Move on " + name);
-			} else if(state == "Move") {
-				String move = PersistentState.getMove(name, server);
+				boss.removeScoreboardTag("boss_windup_" + move);
+				boss.addCommandTag("boss_move_" + move);
+				boss.addCommandTag("boss_once_move_" + move);
 
+				LOGGER.info("boss_once_move_" + move);
+			}
+
+			if(state == "Move") {
 				PersistentState.setState(name, "Recover", server);
 				PersistentState.setProgress(name, PersistentState.getRecover(name, move, server), server);
 
-				boss.addCommandTag("boss_move_" + move);
+				boss.removeScoreboardTag("boss_move_" + move);
+				boss.addCommandTag("boss_recover_" + move);
+				boss.addCommandTag("boss_once_recover_" + move);
+			}
 
-				LOGGER.info("Switched from Move to Recover on " + name);
-			} else if(state == "Recover") {
-				String move = PersistentState.getMove(name, server);
-
+			if(state == "Recover") {
 				PersistentState.setState(name, "Cooldown", server);
 				PersistentState.setProgress(name, PersistentState.getCooldown(name, move, server), server);
 
-				boss.removeScoreboardTag("boss_move_" + move);
-
-				LOGGER.info("Switched from Recover to Cooldown on " + name);
+				boss.removeScoreboardTag("boss_recover_" + move);
 			}
 		}
 	}
