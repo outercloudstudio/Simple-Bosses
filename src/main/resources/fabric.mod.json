@@ -3,13 +3,13 @@
 	"id": "simple_bosses",
 	"version": "${version}",
 	"name": "Simple Bosses",
-	"description": "This is an example description! Tell everyone what your mod is about!",
+	"description": "A utility mod to help create bosses on server for events!",
 	"authors": [
 		"Outer Cloud"
 	],
 	"contact": {
-		"homepage": "https://fabricmc.net/",
-		"sources": "https://github.com/FabricMC/fabric-example-mod"
+		"homepage": "https://github.com/outercloudstudio/Simple-Bosses",
+		"sources": "https://github.com/outercloudstudio/Simple-Bosses"
 	},
 	"license": "CC0-1.0",
 	"icon": "assets/simple_bosses/icon.png",
@@ -17,25 +17,13 @@
 	"entrypoints": {
 		"main": [
 			"outercloud.simple_bosses.SimpleBosses"
-		],
-		"client": [
-			"outercloud.simple_bosses.SimpleBossesClient"
 		]
 	},
-	"mixins": [
-      "simple_bosses.mixins.json",
-		{
-			"config": "simple_bosses.client.mixins.json",
-			"environment": "client"
-		}
-	],
+	"mixins": [],
 	"depends": {
 		"fabricloader": ">=0.14.22",
 		"minecraft": "~1.20.1",
 		"java": ">=17",
 		"fabric-api": "*"
-	},
-	"suggests": {
-		"another-mod": "*"
 	}
 }

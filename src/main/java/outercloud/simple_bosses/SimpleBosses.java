@@ -61,10 +61,10 @@ public class SimpleBosses implements ModInitializer {
 																				.executes(context -> {
 																					String boss = StringArgumentType.getString(context, "boss_name");
 																					String move = StringArgumentType.getString(context, "move_name");
-																					int cooldown = IntegerArgumentType.getInteger(context, "cooldown");
-																					int windup = IntegerArgumentType.getInteger(context, "windup");
-																					int duration = IntegerArgumentType.getInteger(context, "duration");
-																					int recover = IntegerArgumentType.getInteger(context, "recover");
+																					int cooldown = IntegerArgumentType.getInteger(context, "cooldown") / 20;
+																					int windup = IntegerArgumentType.getInteger(context, "windup") / 20;
+																					int duration = IntegerArgumentType.getInteger(context, "duration") / 20;
+																					int recover = IntegerArgumentType.getInteger(context, "recover") / 20;
 
 																					if(!PersistentState.bossExists(boss, context.getSource().getServer())) {
 																						context.getSource().sendError(Text.of("No boss with that name exists!"));
@@ -106,6 +106,21 @@ public class SimpleBosses implements ModInitializer {
 														return -1;
 													}
 
+													Entity entity = PersistentState.getBoss(boss, context.getSource().getServer());
+													String currentMove = PersistentState.getMove(boss, context.getSource().getServer());
+
+													if(entity != null && currentMove == move) {
+														String state = PersistentState.getState(boss, context.getSource().getServer());
+
+														if(entity.getCommandTags().contains("boss_once_" + state.toLowerCase() + "_" + move)) {
+															entity.removeScoreboardTag("boss_once_" + state.toLowerCase() + "_" + move);
+														}
+
+														if(entity.getCommandTags().contains("boss_" + state.toLowerCase() + "_" + move)) {
+															entity.removeScoreboardTag("boss_" + state.toLowerCase() + "_" + move);
+														}
+													}
+
 													PersistentState.removeMove(boss, move, context.getSource().getServer());
 
 													return 1;
@@ -121,10 +136,10 @@ public class SimpleBosses implements ModInitializer {
 																				.executes(context -> {
 																					String boss = StringArgumentType.getString(context, "boss_name");
 																					String move = StringArgumentType.getString(context, "move_name");
-																					int cooldown = IntegerArgumentType.getInteger(context, "cooldown");
-																					int windup = IntegerArgumentType.getInteger(context, "windup");
-																					int duration = IntegerArgumentType.getInteger(context, "duration");
-																					int recover = IntegerArgumentType.getInteger(context, "recover");
+																					int cooldown = IntegerArgumentType.getInteger(context, "cooldown") / 20;
+																					int windup = IntegerArgumentType.getInteger(context, "windup") / 20;
+																					int duration = IntegerArgumentType.getInteger(context, "duration") / 20;
+																					int recover = IntegerArgumentType.getInteger(context, "recover") / 20;
 
 																					if(!PersistentState.bossExists(boss, context.getSource().getServer())) {
 																						context.getSource().sendError(Text.of("No boss with that name exists!"));
@@ -236,7 +251,7 @@ public class SimpleBosses implements ModInitializer {
 								})
 						)
 				)
-				.then(CommandManager.literal("debug")
+				.then(CommandManager.literal("trigger")
 						.then(CommandManager.argument("boss_name", StringArgumentType.word())
 								.then(CommandManager.argument("move_name", StringArgumentType.word())
 										.executes(context -> {
@@ -253,6 +268,21 @@ public class SimpleBosses implements ModInitializer {
 												context.getSource().sendError(Text.of("That boss does not have that move!"));
 
 												return -1;
+											}
+
+											Entity entity = PersistentState.getBoss(boss, context.getSource().getServer());
+
+											if(entity != null) {
+												String state = PersistentState.getState(boss, context.getSource().getServer());
+												String currentMove = PersistentState.getMove(boss, context.getSource().getServer());
+
+												if(entity.getCommandTags().contains("boss_once_" + state.toLowerCase() + "_" + currentMove)) {
+													entity.removeScoreboardTag("boss_once_" + state.toLowerCase() + "_" + currentMove);
+												}
+
+												if(entity.getCommandTags().contains("boss_" + state.toLowerCase() + "_" + currentMove)) {
+													entity.removeScoreboardTag("boss_" + state.toLowerCase() + "_" + currentMove);
+												}
 											}
 
 											PersistentState.setState(boss, "Windup", context.getSource().getServer());
